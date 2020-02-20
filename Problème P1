@@ -1,0 +1,57 @@
+from numpy import *
+import matplotlib.pyplot as plt
+
+# Fonctions
+def signal_cos(f,deltaV,ofset=0):
+    ''' in: frequence, delta V crête à crête, éventuellement ofset
+        out: 3 périodes d'un signal cosinuosidal avec les caractéristiques ci-dessus (2 tableaux : abscisses et ordonées)'''
+    T=linspace(0,3/f,10000)
+    w=2*pi*f
+    U=deltaV/2*cos(w*T)
+    for i in range(10000):
+        U[i]=U[i]+ofset
+    return T,U
+
+def signal_triangle(f,deltaV,ofset=0,decallage=0):
+    ''' in: frequence, delta V crête à crête, éventuellement ofset et decallage
+        out: 3 périodes d'un signal triangulaire avec les caractéristiques ci-dessus (2 tableaux : abscisses et ordonées)'''
+    T=linspace(0,3/f,10000)
+    t=arange(7)/f/2
+    for i in range(len(t)):
+        t[i]=t[i]+1/f*decallage
+    i=searchsorted(t,T)
+    h=T[1]-T[0]
+    m=2*f*deltaV
+    U=zeros(10000)
+    U[0]=ofset-deltaV/2
+    for j in range(1,10000):
+        if (i[j]+1)%2==0:
+            U[j]=U[j-1]+h*m
+        else :
+            U[j]=U[j-1]-h*m
+    return T,U
+
+
+# On choisit un V et une fréquence puis on définit s (V/s=0.5)
+V=4
+frequence=200
+s=2*V
+fourier=-signal_cos(frequence,16*V/pi/pi*sin(pi/2))[1]# la première harmonique
+for i in [1,2]:
+    fourier=-signal_cos((2*i+1)*frequence,16*V/((2*i+1)*pi*pi)*sin((2*i+1)*pi/2))[1]+fourier# On additionne les 2 suivantes
+
+T,U=signal_triangle(frequence,V*2) #le signal triangulaire (u(t))-> abscisses et ordonées
+plt.plot(T,U,label="vrai signal triangulaire")
+Z=U/((U/s)**2+1)**(1/2) # le tableau d'ordonées de la vraie fonction y=h(u(t))
+#Z_fourier=fourier2/((fourier2/s)**2+1)**(1/2)
+Z2=fourier-1/(2*s**2)*fourier**3# le tableau d'ordonées de l'approximation de y par fourier puis Taylor
+plt.plot(T,fourier,label="Approximation Fourier")
+plt.legend()
+plt.ylabel("V")
+plt.xlabel("t")
+plt.show()
+plt.plot(T,Z,label="vraie fonction y")
+#plt.plot(T,U,label="u")
+plt.plot(T,Z2,label="Approximation par Taylor-Fourier")
+plt.legend()
+plt.show()
